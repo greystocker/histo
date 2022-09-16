@@ -166,7 +166,8 @@ if __name__ == "__main__":
     for i in np.arange(1, 33):
         #        folder = '/home/liverarray/Documents/Greyson/jan12_2_foci_water_1Hz_3y/'
         #        filename = folder+'2_foci_water_1Hz_3y'+str(i-1)
-        folder = 'C:\\Users\\labuser\\Dropbox (University of Michigan)\\Bubble Dissolution Study\\August Pig\\augPigDiss14\\augPigDiss14_'
+        # folder = 'C:\\Users\\labuser\\Dropbox (University of Michigan)\\Bubble Dissolution Study\\August Pig\\augPigDiss14\\augPigDiss14_'
+        folder = 'C:\\Users\\labuser\\Dropbox (University of Michigan)\\Bubble Dissolution Study\\ExVivoDegassedDiss\\9_9_22_DissMeasureSamp1_1\\9_9_22_DissMeasureSamp1_1_'
         filename = folder+str(i-1)
         # print(filename)
         f = open(filename, 'rb')
@@ -174,7 +175,7 @@ if __name__ == "__main__":
         B = np.reshape(A, (npulses, nchan, reclen_extra))
         C = B[:, :, 2:]
         data[:, (i-1)*8+0:i*8, :] = C
-    wfs = data[1:200, :, 50:200]
+    wfs = data[1:, :, 50:200]
     # plt.figure()
     # plt.imshow(wfs)
     # plt.colorbar()
@@ -187,23 +188,26 @@ if __name__ == "__main__":
     mapI.zpos = np.arange(-2e-3, 8e-3, 1e-3)
 
     hmap = mapI.parallelTEAPAM()
+    np.save('testDataExVivo', hmap)
+    # proj = np.sum(hmap, axis=1)
 
-    proj = np.sum(hmap, axis=1)
+    # maxlvl = np.max(proj[:])
+    # minlvl = np.min(proj[:])
 
-    maxlvl = np.max(proj[:])
-    minlvl = np.min(proj[:])
+    # fig = plt.figure()
 
-    fig = plt.figure()
+    # gs = GridSpec(1, 2, figure=fig)
+    # ax0 = fig.add_subplot(gs[0, 0])
+    # ax1 = fig.add_subplot(gs[0, 1])
 
-    gs = GridSpec(1, 1, figure=fig)
-    ax0 = fig.add_subplot(gs[0, 0])
+    # for locN in range(proj.shape[0]):
+    #     if locN:
+    #         ax0.clear()
 
-    for locN in range(proj.shape[0]):
-        if locN:
-            ax0.clear()
+    #     ax0.imshow(proj[locN, :, :], vmin=minlvl, vmax=maxlvl)
+    #     ax0.set_title(locN*2)
 
-        ax0.imshow(proj[locN, :, :], vmin=minlvl, vmax=maxlvl)
-        ax0.set_title(locN*2)
-        plt.pause(.1)
+    #     ax1.plot(locN, np.max(proj[locN, :, :]), '.')
+    #     plt.pause(.1)
 
     # print(hmap.shape)

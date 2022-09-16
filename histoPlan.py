@@ -21,6 +21,12 @@ class treatment:
         self.numPts = len(self.pts)
         # self.treatmentDF = self.makeShellDF()
         self.treatmentDF = self.makeLundtLatDF()
+        # self.treatmentDF = self.makeRasterDF()
+        self.pts = [self.treatmentDF['x'].values,self.treatmentDF['y'].values,self.treatmentDF['z'].values]
+        
+    def makeRasterDF(self, ):
+        """Function to make DF for raster scan treatment"""
+        return self.initDF()
 
     def makeLundtLatDF(self, minLatSpacing=5, minAxSpacing=5):
         """Function for grouping points based on a minimum separation
@@ -28,6 +34,7 @@ class treatment:
             df: initialized treatment dataframe
             minLatSpacing: minimum lateral spacing [mm]
             minAxSpacing: minimum axial spacing [mm]"""
+        
         df = self.initDF()
         groupsX = np.arange(np.min(self.pts[:, 0]), np.max(
             self.pts[:, 0]), minLatSpacing)
@@ -87,9 +94,14 @@ class treatment:
         newDF = self.getSubGroupOrder(df)
 
         oI = 0
-        for xi in np.unique(newDF['xRelInd'].values):
-            for yi in np.unique(newDF['yRelInd'].values):
-                for zi in np.unique(newDF['zRelInd'].values):
+        zRel = np.sort(np.unique(newDF['zRelInd'].values))[::-1]
+        yRel = np.unique(newDF['yRelInd'].values)
+        np.random.shuffle(yRel)
+        xRel = np.unique(newDF['xRelInd'].values)
+        np.random.shuffle(xRel)
+        for zi in zRel:
+            for yi in yRel:
+                for xi in xRel:
                     groups = newDF[(newDF['xRelInd'] == xi) & (newDF['yRelInd'] == yi) & (
                         newDF['zRelInd'] == zi)]['subGroupOrder'].values
                     for group in groups:
@@ -97,7 +109,7 @@ class treatment:
                             newDF['zRelInd'] == zi) & (newDF['subGroupOrder'] == group), 'order'] = oI
                         # if np.isin(oI, newDF['order'].values):
                         oI = oI + 1
-
+        # newDF['order'] = (newDF['order']-newDF['order'].max()).abs()
         newDF.sort_values(by=['order'], inplace=True)
         newDF.set_index('order', inplace=True)
 
@@ -143,10 +155,35 @@ class treatment:
         df = self.columnize(df)
         df = self.seedSubGroup(df)
         df = self.windowGroup(df)
+        df = self.shellOrder(df)
+        print(df)
+        # df.sort_values(by=['order'], inplace=True)
+        # df.set_index('order', inplace=True)
 
         # Need to add final ordering
 
         return df
+
+    def shellOrder(self, df):
+
+        df.sort_values(by=['subGroup'], inplace = True)
+
+        numSGs = df['subGroup'].max()
+
+        oi = 0
+
+        for i in range(numSGs):
+            sdf = df[df['subGroup']==i]
+            order = np.arange(oi,oi+len(sdf))
+            
+            locInd = sdf.index[0]
+
+            df.loc[df['subGroup']==i,'order'] = order
+            oi = np.max(order)+1
+        
+        newDF = df.sort_values(by=['order'])
+        newDF.set_index('order', inplace=True)
+        return newDF
 
     def hcp_maker(self,):
         """Used to generate a treatment grid of hexagonally packed points
@@ -187,7 +224,7 @@ class treatment:
                     pts_final[final_idx, :] = pts[i, :]
                     final_idx = final_idx + 1
             pts = pts_final[0:final_idx, :]
-
+        pts[:,2] = pts[:,2]*-1
         return(pts)
 
     def plotTreatment(self, groups=False):
@@ -350,16 +387,38 @@ class treatment:
         return df
 
 
+    def animateTreatment(self, ):
+        """Function for animating treatment pattern
+        Scatter-plots treatment points in order, but does not account for how subgroups
+        may be repeated before continuing in the treatment order (i.e. it plots all points one time)"""
+
+        xlims = (self.treatmentDF['x'].min()*1.1,self.treatmentDF['x'].max()*1.1)
+        ylims = (self.treatmentDF['y'].min()*1.1,self.treatmentDF['y'].max()*1.1)
+        zlims = (self.treatmentDF['z'].min()*1.1,self.treatmentDF['z'].max()*1.1)
+
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+        ax.set_xlim(xlims)
+        ax.set_ylim(ylims)
+        ax.set_zlim(zlims)
+
+        for index,row in self.treatmentDF.iterrows():
+            ax.clear()
+            ax.scatter(row['x'], row['y'], row['z'])
+            ax.set_xlim(xlims)
+            ax.set_ylim(ylims)
+            ax.set_zlim(zlims)
+            plt.pause(0.001)
+            fig.show()
+
+
 if __name__ == "__main__":
 
-    test = treatment(15, 1, shape='sphere')
-    # print(test.treatmentDF.head())
-    # print(np.unique(len(test.treatmentDF['order'].values)))
-    # print(len(test.treatmentDF['order'].values))
-    # print(len(test.treatmentDF))
-
-    pd.options.display.max_rows = 50
-    test.plotTreatment(groups=True)
-    print(test.treatmentDF)
-
+    test = treatment(10, 1, shape='sphere')
+    test.animateTreatment()
     # test.plotTreatment(groups=True)
+    
