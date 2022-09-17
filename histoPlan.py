@@ -7,7 +7,7 @@ import pandas as pd
 
 class treatment:
 
-    def __init__(self, steering_width, point_spacing, shape='sphere'):
+    def __init__(self, steering_width, point_spacing, shape='sphere', sequence = 'raster'):
         """steering_width: diameter of volume
         point_spacing: spacing between points (mm) (default = 1 mm)
         shape: sphere or cube (default = cube)"""
@@ -19,9 +19,16 @@ class treatment:
         self.corner = [90.6, 77.2, -73.9]
         self.pts = np.round(self.hcp_maker(), decimals=2)
         self.numPts = len(self.pts)
-        # self.treatmentDF = self.makeShellDF()
-        self.treatmentDF = self.makeLundtLatDF()
-        # self.treatmentDF = self.makeRasterDF()
+        
+        if sequence == 'raster':
+            self.treatmentDF = self.makeRasterDF()
+        elif sequence == 'lundt':
+            self.treatmentDF = self.makeLundtLatDF()
+        elif sequence == 'shell':
+            self.treatmentDF = self.makeShellDF()
+        else:
+            print('Please use raster, shell, or lundt sequence types.')
+        
         self.pts = [self.treatmentDF['x'].values,self.treatmentDF['y'].values,self.treatmentDF['z'].values]
         
     def makeRasterDF(self, ):
@@ -156,28 +163,21 @@ class treatment:
         df = self.seedSubGroup(df)
         df = self.windowGroup(df)
         df = self.shellOrder(df)
-        print(df)
-        # df.sort_values(by=['order'], inplace=True)
-        # df.set_index('order', inplace=True)
-
-        # Need to add final ordering
-
+        
         return df
 
     def shellOrder(self, df):
 
         df.sort_values(by=['subGroup'], inplace = True)
 
-        numSGs = df['subGroup'].max()
+        numSGs = df['subGroup'].max()+1
 
         oi = 0
 
         for i in range(numSGs):
             sdf = df[df['subGroup']==i]
             order = np.arange(oi,oi+len(sdf))
-            
-            locInd = sdf.index[0]
-
+            np.random.shuffle(order)
             df.loc[df['subGroup']==i,'order'] = order
             oi = np.max(order)+1
         
@@ -418,7 +418,7 @@ class treatment:
 
 if __name__ == "__main__":
 
-    test = treatment(10, 1, shape='sphere')
+    test = treatment(10, 1, shape='sphere', sequence='shell')
     test.animateTreatment()
     # test.plotTreatment(groups=True)
     
