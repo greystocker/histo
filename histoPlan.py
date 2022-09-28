@@ -29,7 +29,8 @@ class treatment:
         else:
             print('Please use raster, shell, or lundt sequence types.')
         
-        self.pts = [self.treatmentDF['x'].values,self.treatmentDF['y'].values,self.treatmentDF['z'].values]
+        # self.pts = [self.treatmentDF['x'].values,self.treatmentDF['y'].values,self.treatmentDF['z'].values]
+        self.pts = np.transpose(np.squeeze(np.array([[self.treatmentDF['x'].values], [self.treatmentDF['y'].values],[self.treatmentDF['z'].values]])))
         
     def makeRasterDF(self, ):
         """Function to make DF for raster scan treatment"""
@@ -418,7 +419,7 @@ class treatment:
 
 if __name__ == "__main__":
 
-    test = treatment(10, 1, shape='sphere', sequence='shell')
-    test.animateTreatment()
-    # test.plotTreatment(groups=True)
+    test = treatment(10, 1, shape='sphere', sequence='lundt')
+    # test.animateTreatment()
+    test.plotTreatment(groups=True)
     
